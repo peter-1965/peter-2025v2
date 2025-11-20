@@ -1,0 +1,62 @@
+{% macro nav_loop(page, theme_config, reverse = true) %}
+  {% set arr = page.children.visible | slice(0, (theme_var('header.nav.length'))) %}
+  {% if reverse %}
+    {% set arr = arr | reverse %}
+  {% endif %}
+  {% for p in arr  %}
+    {% set active_page = (p.active or p.activeChild) ? 'active' : '' %}
+    {% if p.children.visible.count > 0 and theme_config.header.subnav %}
+      <li>
+    <a href="{{ p.url }}" class="{{ active_page }} onlymobile">{% if theme_var('nav.expanded') == '1' %}<span class="plussign">+</span><span class="minussign" style="display:none;">-</span>&nbsp;&nbsp;{% endif %}</a>
+        <a href="{{ p.url }}" class="{{ active_page }} mainlink expandable" link>
+        {{ p.menu }}
+        </a>
+        <ul class="nav-lvl2">
+          {{ _self.nav_loop(p, theme_config, false) }}
+        </ul>
+      </li>
+    {% else %}
+      {% if (p.home() and theme_config.header.home and p.header.markdown.title == false) or p.home() == false %}
+        <li>
+          <a href="{{ p.url }}" class="{{ active_page }} mainlink" link>
+            {{ p.menu }}
+          </a>
+        </li>
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+{% endmacro %}
+
+<nav class="header-nav desktop">
+  {% if theme_var('header.kundencode') == 'stkh' %}<div class="wrap">{% endif %}
+      {% if theme_var('header.kundencode') == 'stkh' %}
+        <a href="/" class="stickyheaderimg"><img src="{{ url('theme://custom/images/logo_stkh.svg') }}"  /></a>
+      {% endif %}
+  <ul class="nav-lvl1" {{ tree ? 'class="tree"' : '' }}>
+    {{ _self.nav_loop(pages, theme_config) }}
+  </ul>
+  <ul class="specialnav">
+      {% if theme_var('nav.button.enabled') %}
+    <li class="specialbutton"><a href="{% if theme_var('nav.button.url') is empty %}{{ base_url }}{{ theme_var('nav.button.link') }}{% else %}{{ theme_var('nav.button.url') }}{% endif %}">{{ theme_var('nav.button.text') | raw }}</a></li>
+      {% endif %}
+        {% if theme_var('nav.button2.enabled') %}
+        <li class="specialbutton"><a href="{% if theme_var('nav.button2.url') is empty %}{{ base_url }}{{ theme_var('nav.button2.link') }}{% else %}{{ theme_var('nav.button2.url') }}{% endif %}">{{ theme_var('nav.button2.text') | raw }}</a></li>
+      {% endif %}
+  </ul>
+  {% if theme_var('header.kundencode') == 'stkh' %}</div>{% endif %}
+</nav>
+<nav class="header-nav mobile">
+  <ul class="nav-lvl1" {{ tree ? 'class="tree"' : '' }}>
+    {{ _self.nav_loop(pages, theme_config, false) }}
+    {% if theme_var('nav.button.enabled') %}
+      <li class="specialbutton"><a href="{% if theme_var('nav.button.url') is empty %}{{ base_url }}{{ theme_var('nav.button.link') }}{% else %}{{ theme_var('nav.button.url') }}{% endif %}" class="onlymobile">{{ theme_var('nav.button.text') | raw }}</a></li>
+    {% endif %}
+        {% if theme_var('nav.button2.enabled') %}
+      <li class="specialbutton2"><a href="{% if theme_var('nav.button2.url') is empty %}{{ base_url }}{{ theme_var('nav.button2.link') }}{% else %}{{ theme_var('nav.button2.url') }}{% endif %}" class="onlymobile">{{ theme_var('nav.button2.text') | raw }}</a></li>
+    {% endif %}
+      {% if theme_var('header.kundencode') == 'stkh' %}
+       {% include 'partials/stkhmobile.html.twig' %}
+    {% endif %}
+  </ul>
+
+</nav>

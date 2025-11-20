@@ -1,0 +1,108 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+ 
+</head>
+<style>
+    
+.social-btn { display: inline-block; width: 40px; height: 40px; border-radius: 6px; background: #efefef; border: 1px solid #ddd; text-decoration: none; transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 2px 4px rgba(0,0,0,.08); } 
+
+.social-btn.pinterest { background: #486144; border-color: rgba(0,0,0,.05); box-shadow: 0 2px 4px rgba(189,8,28,.35); color: white; } 
+.social-btn.pinterest:hover, .social-btn.pinterest:focus { background: #a3081a; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(189,8,28,.45); outline: none; } 
+.social-btn.pinterest:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(189,8,28,.3); } 
+
+.social-btn.facebook { background: #486144; border-color: rgba(0,0,0,.05); box-shadow: 0 2px 4px rgba(189,8,28,.35);  color: white; } 
+.social-btn.facebook:hover, .social-btn.facebook:focus { background: #a3081a; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(189,8,28,.45); outline: none; } 
+.social-btn.facebook:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(189,8,28,.3); }     
+    
+.social-btn.whatsapp { background: #486144; border-color: rgba(0,0,0,.05); box-shadow: 0 2px 4px rgba(189,8,28,.35);  color: white; } 
+.social-btn.whatsapp:hover, .social-btn.whatsapp:focus { background: #a3081a; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(189,8,28,.45); outline: none; } 
+.social-btn.whatsapp:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(189,8,28,.3); }     
+
+.social-btn.telegram { background: #486144; border-color: rgba(0,0,0,.05); box-shadow: 0 2px 4px rgba(189,8,28,.35);  color: white; } 
+.social-btn.telegram:hover, .social-btn.telegram:focus { background: #a3081a; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(189,8,28,.45); outline: none; } 
+.social-btn.telegram:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(189,8,28,.3); }     
+
+.social-btn.email { background: #486144; border-color: rgba(0,0,0,.05); box-shadow: 0 2px 4px rgba(189,8,28,.35);  color: white; } 
+.social-btn.email:hover, .social-btn.email:focus { background: #a3081a; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(189,8,28,.45); outline: none; } 
+.social-btn.email:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(189,8,28,.3); }     
+    
+.social-btn.twitter { background: #486144; border-color: rgba(0,0,0,.05); box-shadow: 0 2px 4px rgba(189,8,28,.35);  color: white; } 
+.social-btn.twitter:hover, .social-btn.twitter:focus { background: #a3081a; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(189,8,28,.45); outline: none; } 
+.social-btn.twitter:active { transform: translateY(0); box-shadow: 0 2px 6px rgba(189,8,28,.3); }      
+    
+    
+</style>
+    
+<body>
+ {% do assets.addCss('theme://font-awesome/css/all.min.css') %}
+ 
+ <div class="social-media">
+     <p>Teile diesen Beitrag:</p>
+     
+    {% set url = page.url(true) %}
+    {% set title = page.title %}
+    {% set referer = item.url|replace({
+                '{url}': url,
+                '{title}': title
+    }) %}
+
+ 
+     
+     <a href="https://www.facebook.com/sharer.php?u={{ url }}" target="_blank" class="facebook" title="Facebook teilen">
+    <button class="social-btn facebook" style="font-size:24px" aria-label="Facebook teilen">
+      <i class="fab fa-facebook-f" aria-hidden="true"></i>
+    </button>
+  </a>
+     
+     
+     
+     
+  
+    
+   <a href="https://api.whatsapp.com/send?text={{ url }}" target="_blank" class="whatsapp" title="WhatsApp teilen">
+    <button class="social-btn whatsapp" style="font-size:24px" aria-label="WhatsApp teilen">
+      <i class="fab fa-whatsapp" aria-hidden="true"></i>
+    </button>
+  </a>
+     
+    
+
+     
+      <a href="mailto:?subject=Bilder Familie Vögele&amp;body=---Neue Bilder aus {{ page.title }}---%20{{ url }}" target="_blank" class="email" title="Email senden">
+    <button class="social-btn email" style="font-size:24px" aria-label="E-Mail senden">
+      <i class="fa fa-envelope" aria-hidden="true"></i>
+    </button>
+  </a>
+     
+     
+ 
+     
+      <a href="https://t.me/share/url?url={{ url }}&text=Bilder Familie Vögele - {{ title }}" target="_blank" class="telegram" title="Telegram teilen">
+    <button class="social-btn telegram" style="font-size:24px" aria-label="Telegram teilen">
+      <i class="fab fa-telegram-plane" aria-hidden="true"></i>
+    </button>
+  </a>
+     
+     
+ 
+     
+    <a href="https://twitter.com/intent/tweet?url={{ url }}" target="_blank" class="twitter" title="Twitter teilen">
+    <button class="social-btn twitter" style="font-size:24px" aria-label="Twitter teilen">
+      <i class="fab fa-twitter" aria-hidden="true"></i>
+    </button>
+  </a> 
+     
+ 
+     
+       <a href="https://pinterest.com/pin/create/button/?url={{ url }}&text=Bilder Familie Vögele- {{ title }}" target="_blank" class="pinterest" title="Pinterest teilen">
+    <button class="social-btn pinterest" style="font-size:24px" aria-label="Pinterest teilen">
+      <i class="fab fa-pinterest" aria-hidden="true"></i>
+    </button>
+  </a>
+     
+     
+</div>
+
+</body>
+</html> 

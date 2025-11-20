@@ -1,0 +1,55 @@
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Back to Top Example</title>
+  <style>
+    body {
+      height: 2000px; /* just to make page scrollable */
+     
+    }
+
+    #backToTop {
+      display: none; /* Hidden by default */
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 999;
+      background-color: #333;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 10px;
+    }
+
+    #backToTop:hover {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+
+
+  <button id="backToTop" onclick="scrollToTop()">Nach oben</button>
+ {% include 'partials/zoom-button-peter-2025.html.twig' %}
+  <script>
+    const backToTopButton = document.getElementById("backToTop");
+
+    // Show button after scrolling down 100px
+    window.onscroll = function() {
+      if (document.body.scrollTop > 100 || document.documentElement.scrollTop > 100) {
+        backToTopButton.style.display = "block";
+      } else {
+        backToTopButton.style.display = "none";
+      }
+    };
+
+    // Scroll to top smoothly
+    function scrollToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  </script>
+
+</body>
+</html>

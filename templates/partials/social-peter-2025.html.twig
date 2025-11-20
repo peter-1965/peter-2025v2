@@ -1,0 +1,31 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<body>
+ {% do assets.addCss('theme://font-awesome/css/all.min.css') %}
+ 
+ <div class="social-media">
+     <p>Teile diesen Beitrag:</p>
+     
+    {% set url = page.url(true) %}
+    {% set title = page.title %}
+    {% set referer = item.url|replace({
+                '{url}': url,
+                '{title}': title
+    }) %}
+
+    <a href= "https://www.facebook.com/sharer.php?u={{url}}"  target="_blank"><button class="btn-success fa-brands fa-facebook" style="font-size:34px" ></button></a>
+    <a href= "https://api.whatsapp.com/send?text={{url}}"  target="_blank"><button class="btn-success fa-brands fa-whatsapp" style="font-size:34px"></button></a>
+    
+   
+    
+    <a href= "mailto:?subject=Bilder Familie Vögele&body=---Neue Bilder aus {{ page.title }}---%20{{url}}"  target="_blank"><button class="btn-success fa fa-envelope" style="font-size:34px"></button></a>   
+    <a href= "https://t.me/share/url?url={{url}}&text=Familie Vögele - {{title}}"  target="_blank"><button class="btn-success fa-brands fa-telegram" style="font-size:34px"></button></a>
+    <a href= "https://twitter.com/intent/tweet?url={{url}}"  target="_blank"><button class="btn-success fa-brands fa-twitter" style="font-size:34px"></button></a>
+    <a href= "https://pinterest.com/pin/create/button/?url={{url}}&text=Familie Vögele- {{title}}"  target="_blank"><button class="btn-success fa-brands fa-pinterest" style="font-size:34px"></button></a>
+</div>
+
+</body>
+</html> 

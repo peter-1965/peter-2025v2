@@ -1,0 +1,47 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<style>
+#mySidenav a {
+  position: absolute; /* Position them relative to the browser window */
+  left: -80px; /* Position them outside of the screen */
+  transition: 0.3s; /* Add transition on hover */
+  padding: 5px; /* 15px padding */
+  width: 250px; /* Set a specific width */
+  text-decoration: none; /* Remove underline */
+  font-size: 15px; /* Increase font size */
+  color: blue; /* White text color */
+  border-radius: 0 5px 5px 0; /* Rounded corners on the top right and bottom right side */
+}
+
+#mySidenav a:hover {
+  left: 0;
+}
+
+#design {
+  background-color: #04AA6D;
+}    
+
+
+}
+</style>
+
+<body>
+
+<div id="mySidenav" class="sidenav">
+
+ 
+{% for post in page.children.published.order('folder', 'asc').slice(0, 20) %}
+               <a href="{{ post.url }}" id="design">{{ post.title }}</a>
+               
+               <br>
+               <br>
+{% endfor %}    
+  <br> 
+  
+</div>    
+    
+   
+</body>
+</html>

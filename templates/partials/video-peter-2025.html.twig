@@ -1,0 +1,124 @@
+ 
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<style>
+
+video {
+  height: auto;
+  outline:none;
+  border: 9px outset #ddd;
+  padding: 10px;
+}
+
+.video-sm { width: 320px; }
+.video-lg { width: 600px; }
+
+</style>
+
+
+<body>
+
+{% set page_route = page.header.videofolder|default() %}
+{% set media_page = page.find(page_route) %}
+{% set Anzahl = page.find(page_route).media.videos|length %}
+
+
+
+
+{{ page_route }}
+
+
+<div class="tab">
+    <button class="tablinks" onclick="openCity(event, 'Klein')" id="defaultOpen">Kleine Videos</button>
+    <button class="tablinks" onclick="openCity(event, 'Gross')" >Große Videos</button>
+   
+</div>
+
+
+
+
+
+<div id="Gross" class="tabcontent">
+<span onclick="this.parentElement.style.display='none'" class="topright"></span>
+    <ul>
+    <div>
+    {% for video in page.find(page_route).media %}
+        {% set url = video.url %}
+        <video id="myVideo" class="video-lg" controls muted >
+        <source src= "{{ url }}" type="video/mp4">
+        </video>
+        
+    {% endfor %}
+    </div>
+    </ul>
+
+</div>
+
+<div id="Klein" class="tabcontent">
+<span onclick="this.parentElement.style.display='none'" class="topright"></span>
+    <ul>
+    <div>
+    {% for video in page.find(page_route).media %}
+        {% set url = video.url %}
+        <video id="myVideo" class="video-sm" controls muted  >
+        <source src= "{{ url }}" type="video/mp4">
+        </video>
+    {% endfor %}
+    </div>
+    </ul>
+
+</div>
+
+
+</body>
+
+<script>
+
+   // Get the element with id="defaultOpen" and click on it
+document.getElementById("defaultOpen").click();    
+    
+const video = document.getElementById('myVideo');
+
+
+$(window).keypress(function(e) {
+  const video = document.getElementById("vid");
+
+  // check if keypress event originates from an input and if so; NOOP
+  const nodeName = e.target.nodeName;
+  if (nodeName && nodeName.toUpperCase() === "INPUT") { return; }
+
+  if (e.which == 32) {
+    if (video.paused) {
+      video.play();
+    } else {
+      video.pause();
+    }
+  }
+});
+    
+    
+function openCity(evt, cityName) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablinks");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].className = tablinks[i].className.replace(" active", "");
+  }
+  document.getElementById(cityName).style.display = "block";
+  evt.currentTarget.className += " active";
+
+     
+}
+    
+
+
+</script>
+
+
+</html>

@@ -1,0 +1,181 @@
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menü-Button auf linker Seite</title>
+    <style>
+     
+        
+        /* Fixierter Menü-Container auf der linken Seite */
+        .menu-container {
+            position: fixed; /* Fixierte Position */
+            top: 100px;       /* Abstand vom oberen Rand */
+            left: 20px;      /* Abstand vom linken Rand (geändert) */
+            z-index: 990;   /* Sicherstellen, dass es über allem anderen liegt */
+        }
+
+        /* Button-Stil */
+        .menu-button {
+            background-color: black;
+            color: white;
+            padding: 6px 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Schatten für bessere Sichtbarkeit */
+        }
+
+        .menu-button:hover {
+            background-color:black;
+        }
+
+        /* Menü-Stil mit Scrollbalken */
+        .menu {
+            display: none; /* Standardmäßig verborgen */
+            position: absolute;
+            background-color: white;
+            width: 250px; /* Feste Breite für konsistente Darstellung */
+            max-height: 300px; /* Maximale Höhe bevor Scrollbalken erscheint */
+            overflow-y: auto; /* Vertikaler Scrollbalken bei Bedarf */
+            box-shadow: 0px 8px 16px rgba(0,0,0,0.2);
+            z-index: 1001; /* Über dem Button */
+            border-radius: 4px;
+            left: 0; /* Ausrichtung am linken Rand des Buttons (geändert) */
+            top: 100%; /* Direkt unter dem Button */
+        }
+
+        /* Menü-Links */
+        .menu a {
+            color: #333;
+            padding: 12px 16px;
+            text-decoration: none;
+            display: block;
+            transition: background-color 0.3s;
+            white-space: nowrap; /* Verhindert Zeilenumbruch */
+            overflow: hidden; /* Versteckt überfließenden Text */
+            text-overflow: ellipsis; /* Fügt "..." bei zu langem Text hinzu */
+        }
+
+        .menu a:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* Kategorie-Überschriften */
+        .menu-category {
+            padding: 8px 16px;
+            font-weight: bold;
+            color: black;
+            font-size: 14px;
+            background-color: grey;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Trennlinien */
+        .menu-divider {
+            height: 1px;
+            background-color: #eee;
+            margin: 5px 0;
+        }
+
+        /* Scrollbalken anpassen */
+        .menu::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .menu::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .menu::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .menu::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Klasse zum Anzeigen des Menüs */
+        .menu.show {
+            display: block;
+        }
+
+    
+    </style>
+</head>
+<body>
+    <!-- Fixierter Menü-Container auf der linken Seite -->
+    <div class="menu-container">
+        <!-- Button, der das Menü öffnet -->
+        <button class="menu-button">Menü Länder</button>
+        
+        <!-- Das eigentliche Menü -->
+        <div class="menu">
+            <!-- Kategorie 1 -->
+            <div class="menu-category">Hauptnavigation</div>
+            <a href="https://europa.familie-voegele.org">Europa</a>
+            <a href="https://deutschland.familie-voegele.org">Deutschland</a>
+            <a href="https://mexiko.familie-voegele.org">Mexiko</a>
+            <a href="https://spanien.familie-voegele.org">Spanien</a>
+            <a href="https://rumaenien.familie-voegele.org">Rumänien</a>
+            <a href="https://japan.familie-voegele.org">Japan</a>
+            
+            <!-- Trennlinie -->
+            <div class="menu-divider"></div>
+            
+            <!-- Kategorie 2 -->
+            <div class="menu-category">Design</div>
+            <a href="#">Tips und Tricks</a>
+       
+            
+            <!-- Trennlinie -->
+            <div class="menu-divider"></div>
+            
+            <!-- Kategorie 3 -->
+            <div class="menu-category">Verwaltung</div>
+            <a href="/dateien">Dateien</a>
+          
+            
+            <!-- Trennlinie -->
+            <div class="menu-divider"></div>
+            
+            <!-- Kategorie 4 -->
+            <div class="menu-category">Rechtliches</div>
+            <a href="/impressum">Impressum</a>
+          
+         
+        </div>
+    </div>
+
+  
+    <script>
+        // JavaScript für die Menü-Funktionalität
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuButton = document.querySelector('.menu-button');
+            const menu = document.querySelector('.menu');
+
+            // Menü öffnen/schließen beim Klick auf den Button
+            menuButton.addEventListener('click', function(event) {
+                event.stopPropagation(); // Verhindert, dass das Klick-Event weitergeleitet wird
+                menu.classList.toggle('show');
+            });
+
+            // Menü schließen, wenn irgendwo außerhalb geklickt wird
+            window.addEventListener('click', function() {
+                if (menu.classList.contains('show')) {
+                    menu.classList.remove('show');
+                }
+            });
+
+            // Verhindert das Schließen des Menüs, wenn innerhalb des Menüs geklickt wird
+            menu.addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+        });
+    </script>
+</body>
+</html>

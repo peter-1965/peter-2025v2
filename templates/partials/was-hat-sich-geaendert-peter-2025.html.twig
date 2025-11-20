@@ -1,0 +1,404 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+
+
+
+<div class="gallery-header">
+    <button onclick="document.getElementById('tage-buttons').scrollIntoView({behavior: 'smooth'});">
+        📸 Aktuelle Galerien 
+    </button>
+</div>
+
+
+
+
+
+<!-- 🔹 Zeit-Auswahl Buttons -->
+<div id="tage-buttons" class="gallery-filter" style="text-align:center; margin-bottom:2em;">
+    {% set options = [30, 90, 180, 365, 720] %}
+    {% set selected_days = uri.query('tage')|default(365) %}
+    {% for tage in options %}
+        <span style="display:inline-flex; align-items:center; margin:0.2em; position:relative;">
+            <button 
+                class="tage-btn {% if tage == selected_days|int %}active{% endif %}" 
+                onclick="window.location.href='?tage={{ tage }}#galerien'">
+                {{ tage }} Tage
+            </button>
+
+            {% if tage == selected_days|int %}
+                <!-- Share-Button & Menü nur beim aktiven Zeitraum -->
+                
+                <button 
+                    class="share-btn" 
+                    onclick="shareCurrent(event, '✨📸 Schau dir die Galerie der letzten {{ tage }} Tage an 🔥', this)">
+                    🔗
+                </button>
+
+                <div class="share-menu hidden">
+                    <button type="button" class="share-option" data-action="copy">📋 Link kopieren</button>
+                    <button type="button" class="share-option" data-action="twitter">🐦 Twitter</button>
+                    <button type="button" class="share-option" data-action="facebook">📘 Facebook</button>
+                    <button type="button" class="share-option" data-action="whatsapp">💬 WhatsApp</button>
+                    <button type="button" class="share-option" data-action="telegram">📨 Telegram</button>
+                    <button type="button" class="share-option" data-action="mastodon">🐘 Mastodon</button>
+                    <button type="button" class="share-option" data-action="email">✉️ E-Mail</button>
+                    <button type="button" class="share-option" data-action="gmail">📧 Gmail</button>
+                    <button type="button" class="share-option" data-action="outlook">📬 Outlook</button>
+                </div>
+            {% endif %}
+        </span>
+    {% endfor %}
+</div>
+
+
+
+<!-- 🔹 Beschreibung -->
+<p class="gallery-subtitle">
+    Es werden nur Galerien der Kategorie <strong>„Reisen“</strong> angezeigt,
+    die ein <code>datumgallerie</code>-Feld besitzen und innerhalb des gewählten Zeitraums veröffentlicht wurden.
+</p>
+
+{% set category_filter = 'reisen' %}
+{% set pages = grav.pages.all() %}
+{% set now = "now"|date("Y-m-d") %}
+
+{# --- Zeitvariable aus URL (z. B. ?tage=90), Standard 365 --- #}
+{% set tage = uri.query('tage')|default(365) %}
+{% set one_year_ago = "now"|date_modify("-" ~ tage ~ " days")|date("Y-m-d") %}
+
+{# Seiten mit Kategorie "reisen" #}
+{% set filtered_pages = pages|filter(page =>
+    page.taxonomy['category'] is defined and category_filter in page.taxonomy['category']
+) %}
+{% set visible_pages = filtered_pages|filter(page => page.visible is defined and page.visible) %}
+
+{% macro render_children(page, now, one_year_ago) %}
+    {% if page.children and page.children|length > 0 %}
+        <ul>
+            {% set sorted_children = page.children.order('title','asc') %}
+            {% for child in sorted_children %}
+                {% set raw = child.header.datumgallerie|default('')|trim %}
+                {% if raw %}
+                    {% set cleaned = raw|replace({'.':'-','/':'-'})|trim %}
+                    {% set parts = cleaned|split('-') %}
+                    {% set iso = '' %}
+
+                    {% if parts|length == 3 %}
+                        {% set a = parts[0]|trim %}
+                        {% set b = parts[1]|trim %}
+                        {% set c = parts[2]|trim %}
+                        {% if a|length == 4 %}
+                            {% set iso = a ~ '-' ~ (b|length == 1 ? '0'~b : b) ~ '-' ~ (c|length == 1 ? '0'~c : c) %}
+                        {% else %}
+                            {% set iso = c ~ '-' ~ (b|length == 1 ? '0'~b : b) ~ '-' ~ (a|length == 1 ? '0'~a : a) %}
+                        {% endif %}
+                    {% endif %}
+
+                    {% if iso >= one_year_ago and iso <= now %}
+                        <li>
+                            <a href="{{ child.url }}">{{ child.title }}</a>
+                            <span style="color:#666;font-size:0.9em;">({{ raw }})</span>
+                            {{ _self.render_children(child, now, one_year_ago) }}
+                        </li>
+                    {% endif %}
+                {% else %}
+                    {{ _self.render_children(child, now, one_year_ago) }}
+                {% endif %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+{% endmacro %}
+
+{% import _self as utils %}
+
+<!-- 🔹 Ausgabe -->
+<div id="galerien" class="card-container">
+    {% for page in visible_pages %}
+        {% set children_html = utils.render_children(page, now, one_year_ago)|trim %}
+        {% if children_html is not empty and '<li>' in children_html %}
+            <div class="card">
+                {% set first_image = page.media.images|first %}
+                {% if first_image %}
+                    <img src="{{ first_image.url }}" alt="{{ first_image.filename }}" class="card-img" loading="lazy">
+                {% endif %}
+                <h3><a href="{{ page.url }}">{{ page.title }}</a></h3>
+                {{ children_html|raw }}
+            </div>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<style>
+
+/* Standardgröße für Desktop */
+.share-menu {
+  min-width: 220px;
+  max-width: 320px;
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  padding: 0.5em 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+
+.share-menu .share-option {
+  display: block;
+  width: 100%;
+  padding: 0.5em 1em;
+  text-align: left;
+  border: none;
+  background: none;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.share-menu .share-text {
+  font-weight: 700;
+  font-size: 1em;
+  text-align: center;
+  margin-bottom: 0.5em;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Animation beim Öffnen */
+.share-menu.show .share-text {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Mobile Anpassung */
+@media (max-width: 600px) {
+  .share-menu {
+    min-width: 160px;   /* fast die gesamte Breite */
+    max-width: 90%;
+    /*left: 50%; */
+    transform: translateX(-50%);
+  }
+
+  .share-menu .share-option,
+  .share-menu .share-text {
+    font-size: 1.1em;  /* größere Schrift für Touch */
+    padding: 0.6em 1em;   /* etwas weniger Padding */
+    line-height: 1.2em;   /* engerer Zeilenabstand */
+  }
+}
+
+/* Hover-Effekt */
+.share-menu .share-option:hover,
+.share-menu .share-option:focus {
+  background: grey;   /* Hintergrund beim Hover */
+  color: black;          /* Textfarbe ändern */
+  border-radius: 8px;    /* optional leicht abgerundet */
+}
+
+.hidden {
+  display: none;
+}
+
+.tage-btn {
+    background: #eee;
+    border: 1px solid #888;
+    border-radius: 6px;
+    padding: 0.5em 1em;
+    margin: 0.2em;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+.tage-btn:hover { background: #ddd; }
+.tage-btn.active {
+    background: linear-gradient(135deg, #0088cc, #00bfa5);
+    color: white;
+    border-color: #0088cc;
+}
+
+.gallery-header {
+    position: fixed;
+    bottom: 70px;
+    right: 20px;
+    z-index: 500;
+}
+.gallery-header button {
+    background: linear-gradient(135deg, #0088cc, #00bfa5);
+    color: white;
+    border: none;
+    padding: 1em 2em;
+    border-radius: 8px;
+    font-size: 1.2em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.gallery-header button:hover {
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, #00bfa5, #0088cc);
+}
+.gallery-subtitle {
+    text-align: center;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 2em;
+}
+.card-container { display:flex; flex-wrap:wrap; gap:1em; justify-content:center; }
+.card { border:1px solid #ccc; border-radius:8px; padding:1em; width:300px; background:#fafafa; }
+.card-img { width:100%; border-radius:6px; margin-bottom:.5em; }
+.card ul { list-style:none; padding-left:1em; margin:0.3em 0; }
+.card li { margin:0.2em 0; }
+
+@media (max-width: 768px) {
+    .gallery-header button { padding: 0.6em 1.2em; font-size: 1em; border-radius: 30px; }
+    .gallery-header { bottom: 80px; left: 10px; }
+}
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+
+    const scrollBtn = document.querySelector(".gallery-header button");
+    const tageButtons = document.getElementById("tage-buttons");
+
+    // Scrollen zu den Buttons, Offset für festen Button berücksichtigen
+    function scrollToButtons(offset = 150) { // Höhe des fixierten Buttons
+        const top = tageButtons.getBoundingClientRect().top + window.pageYOffset - offset;
+        window.scrollTo({ top: top, behavior: 'smooth' });
+    }
+
+    // Klick auf "Aktuelle Galerien"
+    scrollBtn.addEventListener("click", function(){
+        scrollToButtons();
+    });
+
+    // Sichtbarkeit des "Aktuelle Galerien"-Buttons
+    function checkButtonVisibility() {
+        const rect = tageButtons.getBoundingClientRect();
+        const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+        // Button ausblenden, wenn Tages-Buttons sichtbar sind
+        scrollBtn.style.display = (rect.top < windowHeight && rect.bottom > 0) ? 'none' : 'block';
+    }
+
+    window.addEventListener("scroll", checkButtonVisibility);
+    window.addEventListener("resize", checkButtonVisibility);
+    checkButtonVisibility();
+
+    // Direkt scrollen nach Reload, wenn Parameter ?tage= gesetzt
+    const urlParams = new URLSearchParams(window.location.search);
+    if(urlParams.has('tage')) {
+        setTimeout(() => scrollToButtons(), 50);
+    }
+
+});
+
+
+// ab hier Code für share
+
+function shareCurrent(event, text, btn) {
+  event.stopPropagation();
+
+  // Kein navigator.share → immer eigenes Menü
+  showShareMenu(btn);
+}
+
+function showShareMenu(btn) {
+  closeAllShareMenus();
+  const menu = btn.parentElement.querySelector('.share-menu');
+  if (menu) {
+    menu.classList.toggle('hidden');
+    menu.classList.toggle('show'); // Animation
+  }
+}
+
+function closeAllShareMenus() {
+  document.querySelectorAll('.share-menu').forEach(menu => {
+    menu.classList.add('hidden');
+    menu.classList.remove('show');
+  });
+}
+
+document.addEventListener('click', closeAllShareMenus);
+
+// Share-Optionen
+document.addEventListener('click', e => {
+  if (!e.target.classList.contains('share-option')) return;
+  e.stopPropagation();
+
+  const action = e.target.dataset.action;
+  const url = encodeURIComponent(window.location.href);
+  const activeBtn = e.target.closest('span').querySelector('.share-btn');
+  const shareText = activeBtn ? activeBtn.getAttribute('onclick').match(/'([^']+)'/)[1] : '';
+  const encodedText = encodeURIComponent(shareText);
+
+  switch(action){
+    case 'copy':
+      navigator.clipboard.writeText(`${shareText}: ${window.location.href}`)
+        .then(() => alert('✅ Link kopiert!'))
+        .catch(() => alert('❌ Konnte den Link nicht kopieren.'));
+      break;
+    case 'twitter':
+      window.open(`https://twitter.com/intent/tweet?text=${encodedText}%20${url}`, '_blank');
+      break;
+    case 'facebook':
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+      break;
+    case 'whatsapp':
+      window.open(`https://wa.me/?text=${encodedText}%20${url}`, '_blank');
+      break;
+    case 'telegram':
+      window.open(`https://t.me/share/url?url=${url}&text=${encodedText}`, '_blank');
+      break;
+    case 'mastodon':
+      const instance = prompt('Bitte gib deine Mastodon-Instanz ein (z. B. mastodon.social):', 'mastodon.social');
+      if(instance) window.open(`https://${instance}/share?text=${encodedText}%20${url}`, '_blank');
+      break;
+    case 'email':
+      window.location.href = `mailto:?subject=${encodeURIComponent('Schau dir die Galerie an')}&body=${shareText}%0A%0A${decodeURIComponent(url)}`;
+      break;
+    case 'gmail':
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent('Schau dir die Galerie an')}&body=${encodedText}%20${url}`, '_blank');
+      break;
+    case 'outlook':
+      window.open(`https://outlook.live.com/owa/?path=/mail/action/compose&subject=${encodeURIComponent('Schau dir die Galerie an')}&body=${encodedText}%20${url}`, '_blank');
+      break;
+  }
+
+  closeAllShareMenus();
+});
+
+
+
+
+
+
+
+
+// Menü schließen, wenn man außerhalb klickt
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('share-menu');
+  if (!menu.contains(e.target) && !e.target.classList.contains('share-btn')) {
+    menu.classList.add('hidden');
+  }
+});
+
+</script>
+
+
+
+
+
+
+
+
+
+</body>
+</html>

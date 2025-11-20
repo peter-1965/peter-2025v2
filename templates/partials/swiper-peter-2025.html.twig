@@ -1,0 +1,65 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+
+<style>
+
+
+@media only screen and ( min-width: 950px ) {
+    .myview { width: 700px; }
+    
+}
+
+@media only screen and ( max-width: 440px ) {
+    .myview { width: 320px; }
+   
+}
+
+@media only screen and ( min-width: 440px ) and ( max-width: 950px ) {
+    .myview { width: 500px; }
+   
+}
+
+
+  
+</style>
+</head>
+
+
+<body>
+
+
+{% set page_route = page.header.jahresfolder|default() %}
+{% set media_page = page.find(page_route) %}
+{% set Anzahl = page.find(page_route).media.image|length %}
+
+<br>
+
+
+    
+{% if page_route == "" %}
+    Pfad zu den Jahresbilder nicht angegeben im Header (jahresfolder: /jahresbilder/....)
+{% else %}
+
+<div class="swiper">
+<br>
+
+{% set slides = page.header.swiper.slides ?? media_page.media.all %}
+{{ swiper_js(slides, page.header.swiper.options)|raw }}   
+</div>
+<hr style="border-color: green;">
+{% endif %} 
+
+
+
+
+
+<script>
+
+  
+</script>
+
+
+</body>
+
+</html>

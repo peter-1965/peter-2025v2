@@ -1,0 +1,77 @@
+
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Zoom Button – Schriftgröße ändern</title>
+  <style>
+  
+    .zoom-buttons {
+      position: fixed;
+      bottom: 30px; 
+      left: 20px;
+      z-index: 999;
+    }
+
+    .zoom-buttons button {
+      
+      background-color: #333;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 10px;
+      
+      
+    }
+    
+    
+
+
+  </style>
+</head>
+<body>
+
+  <div class="zoom-buttons">
+    <button title="Schrift verkleinern" onclick="setFontSize('small')">A−</button>
+    <button title="Schrift Standardgröße" onclick="setFontSize('normal')">A</button>
+    <button title="Schrift vergrößern" onclick="setFontSize('large')">A+</button>
+  
+  </div>
+
+ 
+  <script>
+   // Schriftgröße aus dem LocalStorage holen, falls vorhanden
+    window.onload = function() {
+      const savedFontSize = localStorage.getItem('fontSize');
+      if (savedFontSize) {
+        document.body.style.fontSize = savedFontSize;
+      }
+    };
+    
+    // Schriftgröße setzen und im LocalStorage speichern
+    function setFontSize(size) {
+      let fontSize;
+      if (size === 'small') {
+        fontSize = '14px';
+        
+      } else if (size === 'normal') {
+        fontSize = '16px';
+        
+      } else if (size === 'large') {
+       
+        fontSize = '20px';
+      }
+
+      // Schriftgröße anwenden und speichern
+      document.body.style.fontSize = fontSize;
+      localStorage.setItem('fontSize', fontSize);
+    }
+    
+    
+    
+  </script>
+
+</body>
+</html>
+ 

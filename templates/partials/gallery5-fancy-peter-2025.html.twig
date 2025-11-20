@@ -1,0 +1,269 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fancybox mit Tabs</title>
+    <link
+      rel="stylesheet"
+      href="/tecartmedia/@fancyapps/ui-6.0.16/dist/fancybox/fancybox.css"
+    />
+    <style>
+  
+
+      /* Tabs */
+      .tabs-wrapper { overflow-x: auto; background: #fafafa; border-bottom: 1px solid #e0e0e0; }
+      .tabs-wrapper::-webkit-scrollbar { display: none; }
+      .tabs {
+        display: flex;
+        gap: 12px;
+        padding: 12px;
+        flex-wrap: nowrap;
+      }
+      .tab-button {
+        flex: 0 0 auto;
+        background: transparent;
+        border: 1px solid transparent;
+        padding: 8px 14px;
+        cursor: pointer;
+        border-radius: 6px;
+        font-weight: 600;
+        transition: background 0.3s, color 0.3s;
+        white-space: nowrap;
+      }
+      .tab-button:hover:not(.active) { background: #e6f0ff; }
+      .tab-button.active {
+        background: #486144;
+        color: #fff;
+        border-color: #007BFF;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      }
+
+      /* Inhalte */
+      .tab-contents { width: 100%; box-sizing: border-box; padding: 10px; }
+      .tab-content { display: none; width: 100%; }
+      .tab-content.active { display: block; }
+
+      /* Große Galerie */
+      .thumb-large {
+        display: inline-block;
+        margin: 6px;
+        vertical-align: top;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .thumb-large img {
+        display: block;
+        width: 100%;
+        max-width: 500px;
+        height: auto;
+        border-radius: 4px;
+      }
+      .thumb-large:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+
+      /* Kleine Galerie (2 Spalten mobil, 4 Spalten Desktop) */
+      :root { --gap-small: 8px; }
+      .thumbs-small {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--gap-small);
+        margin: 0;
+      }
+      .thumbs-small .thumb-small {
+        flex: 0 0 calc((100% - var(--gap-small)) / 2);
+        box-sizing: border-box;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      @media (min-width: 768px) {
+        .thumbs-small .thumb-small {
+          flex: 0 0 calc((100% - 3 * var(--gap-small)) / 4);
+        }
+      }
+      .thumbs-small img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 4px;
+      }
+      .thumbs-small .thumb-small:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+
+      /* Desktop only Tab 900px */
+      @media (max-width: 767px) {
+        .tab-button.desktop-only { display: none; }
+      }
+      
+
+
+/* Overlay Download-Button */
+  .download-overlay {
+    position: absolute;
+    left: 10px;
+    bottom: 10px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    z-index: 9999;
+    transition: background 0.2s;
+  }
+
+  .download-overlay:hover {
+    background: rgba(0,0,0,0.8);
+  }
+      
+      
+      
+      
+    </style>
+  </head>
+  <body>
+    {% set page_route = page.header.imagefolder|default() %}
+    {% set media_page = page.find(page_route) %}
+    {% set Anzahl = page.find(page_route).media.images|length %}
+
+   
+
+
+ 
+
+    
+    
+    
+    
+    <p style="padding:10px 12px 0 12px; margin:0;">Wähle ein Bild aus für Übersicht der Gallery:</p>
+    <p style="padding:0 12px 10px 12px; margin:0;">Anzahl Bilder: {{ Anzahl }}</p>
+
+    {% if page_route == "" %}
+      <p style="padding:10px 12px;">Pfad zu den Bildern nicht angegeben im Header (imagefolder: /bilder/...)</p>
+    {% endif %}
+
+    <!-- Tabs -->
+    <div class="tabs-wrapper" role="tablist" aria-label="Galerie Auswahl">
+      <div class="tabs">
+        <button class="tab-button active" data-target="content500" role="tab" aria-selected="true">
+          Galerie (max 500)
+        </button>
+        <button class="tab-button" data-target="content200" role="tab" aria-selected="false">
+          Galerie (2/4 Spalten)
+        </button>
+        <button class="tab-button desktop-only" data-target="content900" role="tab" aria-selected="false">
+          Galerie 900px
+        </button>
+      </div>
+    </div>
+
+    <!-- Inhalte -->
+    <div class="tab-contents">
+      <!-- Galerie 500 -->
+      <div id="content500" class="tab-content active" role="tabpanel">
+        {% for item in media_page.media.images %}
+          <div class="thumb-large">
+            <a data-fancybox="gallery500" data-src="{{ item.url|e }}" href="javascript:;">
+              <img src="{{ item.url|e }}" alt="" loading="lazy"/>
+            </a>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Galerie 2/4 Spalten -->
+      <div id="content200" class="tab-content" role="tabpanel" aria-hidden="true">
+        <div class="thumbs-small">
+          {% for item in media_page.media.images %}
+            <div class="thumb-small">
+              <a data-fancybox="gallery200" data-src="{{ item.url|e }}" href="javascript:;">
+                <img src="{{ item.url|e }}" alt="" loading="lazy"/>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Galerie 900px -->
+      <div id="content900" class="tab-content" role="tabpanel" aria-hidden="true">
+        {% for item in media_page.media.images %}
+          <div class="thumb-large" >
+            <a data-fancybox="gallery900" data-src="{{ item.url|e }}" href="javascript:;">
+              <img src="{{ item.url|e }}" alt="" loading="lazy" style="max-width:900px;"/>
+            </a>
+           
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <script src="/tecartmedia/@fancyapps/ui-6.0.16/dist/fancybox/fancybox.umd.js"></script>
+    
+    
+<script>
+  // Tabs wie gehabt
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.addEventListener('click', function () {
+      const targetId = this.getAttribute('data-target');
+      document.querySelectorAll('.tab-button').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+      this.classList.add('active'); this.setAttribute('aria-selected','true');
+      document.querySelectorAll('.tab-content').forEach(c => {
+        if(c.id === targetId){ c.classList.add('active'); c.removeAttribute('aria-hidden'); }
+        else { c.classList.remove('active'); c.setAttribute('aria-hidden','true'); }
+      });
+    });
+  });
+
+  
+Fancybox.bind("[data-fancybox]", {
+  Carousel: {
+    Toolbar: {
+      display: {
+        left: [],
+        middle: [],
+        right: ["zoom","slideshow","fullscreen","download","thumbs","close"]
+      }
+    }
+  },
+  Panzoom: { zoom: true },
+  Slideshow: { autoStart: false },
+  caption: (fancybox, carousel, slide) => {
+    // Standard Caption + Share-Link
+    return (slide.caption || "") +
+      `<br><a href="${slide.src}" target="_blank" style="
+        color:#fff;
+        background: rgba(0,0,0,0.6);
+        padding:4px 8px;
+        border-radius:4px;
+        text-decoration:none;
+        font-size:13px;
+      ">🔗 Link kopieren / öffnen</a>`;
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+  
+</script>
+
+
+
+  </body>
+</html>
+
+

@@ -1,0 +1,182 @@
+<html>
+<style>
+/* Dark Mode für Akazie-Wood Theme */
+    
+   
+    
+body.dark {
+  background-color: #1a1a1a;
+  color: #e0e0e0;
+  
+  .navbar,
+  .navigation,
+  .navbar-section {
+    background-color: #111 !important;
+    color: #eee !important;
+  }    
+    
+/* Menülinks */
+  .navbar a,
+  .navigation a {
+    color: #ccc !important;
+  }
+
+  /* Aktives Menüelement */
+  .navbar a.active,
+  .navigation a.active {
+    background-color: #222 !important;
+    color: #80c0ff !important;
+  }
+
+  /* Hover-Effekt */
+  .navbar a:hover,
+  .navigation a:hover {
+    color: #80c0ff !important;
+  }
+   
+    
+    
+  /* Allgemeiner Content-Bereich */
+  .content,
+  .modular,
+ 
+  .blog-list,
+  .site-content,  
+  .sidebar,
+  .container {
+    background-color: #1a1a1a !important;
+    color: #e0e0e0 !important;
+  }
+
+  /* Header & Navigation */
+  header, 
+    a.mainlink,
+  header.site-header,
+  div.header-inner,
+  nav.header-nav.desktop,
+  ul.nav-lvl1,
+  header .logo,
+  nav,
+    div#breadcrumbs,
+  mainlink,
+  nav ul,
+  nav li {
+    background-color: #111 !important;
+    color: #e0e0e0 !important;
+  }
+
+  nav a {
+    color: #ccc !important;
+  }
+  nav a:hover,
+  nav a:focus,
+  nav a.active {
+    color: #80c0ff !important;
+  }
+
+  /* Footer */
+  footer {
+    background-color: #111 !important;
+    color: #bbb !important;
+  }
+
+  /* Artikel, Boxen, Cards */
+  article,
+  .box,
+  .tabs,
+  .card,
+  .modular .features,
+  .blog-list .item {
+    background-color: #222 !important;
+    color: #e0e0e0 !important;
+    border-color: #333 !important;
+  }
+
+  /* Überschriften */
+  h1, h2, h3, h4, h5, h6 {
+    color: #f0f0f0 !important;
+  }
+
+  /* Links */
+  a {
+    color: #80c0ff !important;
+  }
+  a:hover {
+    color: #a8d1ff !important;
+  }
+
+  /* Buttons & Formulare */
+  button,
+  input,
+  textarea,
+  select {
+    background-color: #333 !important;
+    color: #eee !important;
+    border: 1px solid #444 !important;
+  }
+  button:hover,
+  input[type=submit]:hover {
+    background-color: #444 !important;
+  }
+
+  /* Tabellen */
+  table {
+    background-color: #2a2a2a !important;
+    color: #ddd !important;
+  }
+  th {
+    background-color: #333 !important;
+  }
+  td {
+    border-color: #444 !important;
+  }
+
+  /* Code-Blöcke */
+  pre, code {
+    background-color: #2d2d2d !important;
+    color: #f8f8f2 !important;
+  }
+}
+
+.dark-toggle {
+  font-size: 2rem;
+  padding: 0.2rem;       /* nur etwas Abstand, kein runder Button */
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.dark-toggle:hover {
+  transform: scale(1.2); /* nur Emoji zoomt leicht rein */
+}
+
+body.dark .dark-toggle {
+  color: #ffd700; /* Sonne gelblich */
+}
+
+body.light .dark-toggle {
+  color: #333; /* Mond dunkel */
+}
+
+    
+    
+</style>
+<body>
+
+  <button id="dark-mode-toggle" class="dark-toggle"
+          aria-label="Dark Mode umschalten"
+          title="Dark Mode aktivieren"
+          aria-pressed="false">
+    <span class="icon">🌞🌙</span>
+  </button>
+
+
+  <script src="{{ theme_url }}/js/darkmode.js" defer></script>
+</body>
+
+
+
+</html>    
+
+

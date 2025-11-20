@@ -1,0 +1,164 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+
+.card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Etwas breitere Kacheln */
+    gap: 20px;
+    padding: 20px;
+}
+
+.card {
+    background: #f8f8f8;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    padding: 30px; /* Größerer Innenabstand für mehr Luft */
+    text-align: left;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    min-height: 160px; /* Höhere Kachel für mehr Platz */
+    height: auto;
+    overflow: hidden;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background-color: #e0f7fa; /* Leichter Hintergrundwechsel beim Hover */
+}
+
+.card .card-img {
+    width: 180px; /* Bildgröße passt sich der Breite an dann 100% eintragen */
+    height: 180px; /* Feste Höhe für das Bild */
+    object-fit: cover; /* Bildfüllung, ohne das Bild zu verzerren */
+    margin-bottom: 15px; /* Abstand zwischen Bild und Text */
+    border-radius: 8px;
+}    
+    
+.card h3 a {
+    text-decoration: none;
+    color: #333;
+    font-size: 1.2em;
+    font-weight: normal; /* Kein fetter Text */
+    display: block;
+    margin-bottom: 15px; /* Mehr Abstand zum Text */
+    line-height: 1.4; /* Mehr Zeilenhöhe für besseren Lesefluss */
+}
+
+.card .child-pages {
+    margin-top: 15px;
+    flex-grow: 1;
+}
+
+.card ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin-top: 10px;
+}
+
+.card ul li {
+    margin: 5px 0;
+}
+
+.card ul li a {
+    text-decoration: none;
+    color: #007bff;
+    word-wrap: break-word;
+    font-weight: normal;
+    transition: color 0.3s ease;
+}
+
+.card ul li a:hover {
+    color: #ff4500; /* Ändert die Farbe des Links beim Hover */
+    text-decoration: underline;
+}
+
+.card ul li a:visited:hover {
+    color: #ff4500;
+}
+
+.card p {
+    margin: 0;
+    padding: 0;
+    font-size: 1em;
+    line-height: 1.5; /* Mehr Zeilenhöhe für besseren Textfluss */
+    font-weight: normal;
+}
+
+
+
+
+
+</style>
+</head>
+
+<body>
+
+
+
+
+Auflistung Seiteninhalt die der Kategorie "Reisen" zugeordnet ist:
+
+{# Die Kategorie muß wie folgt eingetragen werden    taxonomy:   reisen  #}
+{# unbedingt den cache leeren #}    
+
+    
+{% set category_filter = 'reisen' %}  {# Die Kategorie, nach der gefiltert werden soll #}
+
+{% set pages = grav.pages.all() %}
+
+{# Filtern der Seiten, die zur angegebenen Kategorie gehören #}
+
+
+
+{% set filtered_pages = pages|filter(page => 
+    page.taxonomy['category'] is defined and 'reisen' in page.taxonomy['category']
+) %}
+
+
+
+{# Nur sichtbare Seiten anzeigen, die die Kategorie haben #}
+{% set visible_pages = filtered_pages|filter(page => 
+    page.visible is defined and page.visible
+) %}
+
+{# Anzeige der gefilterten und sichtbaren Seiten #}
+<div class="card-container">
+    {% for page in visible_pages %}
+        <div class="card">
+            {% set first_image = page.media.images|first %}
+            {% if first_image %}
+                <img src="{{ first_image.url }}" alt="{{ first_image.filename }}" class="card-img">
+            {% endif %}
+            <h3><a href="{{ page.url }}">{{ page.title }}</a></h3>
+            {% if page.children %}
+                <div class="child-pages">
+                    <ul>
+                {% set sorted_children = page.children.order('title', 'asc') %}
+                    {% for child in sorted_children %}
+                        <li><a href="{{ child.url }}">{{ child.title }}</a></li>
+                    {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+
+
+
+
+
+
+
+
+</body>
+</html>
+
+

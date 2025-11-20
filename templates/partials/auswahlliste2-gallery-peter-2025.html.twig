@@ -1,0 +1,52 @@
+<html>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+
+
+
+</style>
+<body>
+
+
+
+{% set currentPagePath = page.url %}     
+{% set parentPage = page.find(currentPagePath) %}
+
+<div>
+    <label for="page-select">Wähle eine Seite:</label>
+    <select id="page-select" onchange="window.location.href=this.value;">
+        <option value="">Bitte wählen (alphabetisch)...</option>
+        
+        {# Seiten nach Titel sortieren #}
+        {% set sortedPages = parentPage.children|map(p => {'title': p.title, 'url': p.url, 'children': p.children}) %}
+        {% set sortedPages = sortedPages|sort('title') %}
+
+        {% for p in sortedPages %}
+            <option value="{{ p.url }}">{{ p.title }}</option>
+
+            {# Wenn es Unterseiten gibt, füge sie hinzu #}
+            {% for subpage in p.children %}
+                <option value="{{ subpage.url }}">– {{ subpage.title }}</option>
+            {% endfor %}
+        {% endfor %}
+     
+    </select>
+   
+</div>
+
+
+
+<script>
+    // Event-Listener für das Dropdown, der beim Auswahl der Seite die URL aufruft
+    document.getElementById('page-select').addEventListener('change', function() {
+        var selectedPage = this.value;
+        if (selectedPage) {
+            window.location.href = selectedPage;
+        }
+    });
+</script>    
+
+
+</body>
+</html> 

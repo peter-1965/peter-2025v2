@@ -1,0 +1,97 @@
+<section class="modular section-teamlist col-12">
+{% if page.header.showtitle == 1 %}<h2 class="heading headingteam">{{ page.header.title }}</h2>{% endif %}
+  <div class="container">
+    <div class="row">
+      {% for person in page.header.personen %}
+    <article class="person col-12 {% if page.header.textpos == 0 %}col-lg-6{% else %}col-lg-4{% endif %}">
+
+
+        <div class="person-image{% if page.header.textpos == 1 %}full{% endif %}">
+
+          {% if person.image|first is iterable %}
+            {% set imgtemp = person.image|first %}
+            {% set image = page.media[imgtemp.name] %}
+          {% else %}
+            {% set imgtemp = person.image %}
+            {% set image = page.media[imgtemp] %}
+          {% endif %}
+
+            {% set point1 = 358 %}
+            {% set point2 = 261 %}
+            {% set point3 = 742 %}
+            {% set point4 = 538 %}
+            {% set point5 = 370 %}
+            {% set point6 = 700 %}
+            {% set point7 = 500 %}
+
+            {% if page.header.aspectratio == 1 %}
+
+
+
+            {% set point1h = 358 / 4 * 3 %}
+            {% set point2h = 261 / 4 * 3  %}
+            {% set point3h = 742 / 4 * 3  %}
+            {% set point4h = 538 / 4 * 3  %}
+            {% set point5h = 370 / 4 * 3  %}
+            {% set point6h = 700 / 4 * 3  %}
+            {% set point7h = 500 / 4 * 3  %}
+
+            {% else %}
+
+            {% set point1h = 358 %}
+            {% set point2h = 261 %}
+            {% set point3h = 742 %}
+            {% set point4h = 538 %}
+            {% set point5h = 370 %}
+            {% set point6h = 700 %}
+            {% set point7h = 500 %}
+
+
+            {% endif %}
+
+            {% if theme_var('header.imagesizing') == 1 %}
+              <picture>
+              <source media="(min-width:1220px)" srcset="{{ image.cropZoom(point1,point1h).url }} 1x, {{ image.cropZoom(point1 * 2,point1h * 2).url }} 2x">
+              <source media="(min-width:992px)" srcset="{{ image.cropZoom(point2,point2h).url }} 1x, {{ image.cropZoom(point2 * 2,point2h * 2).url }} 2x">
+              <source media="(min-width:870px)" srcset="{{ image.cropZoom(point3,point3h).url }} 1x, {{ image.cropZoom(point3 * 2,point3h * 2).url }} 2x">
+              <source media="(min-width:500px)" srcset="{{ image.cropZoom(point4,point4h).url }} 1x, {{ image.cropZoom(point4 * 2,point4h * 2).url }} 2x">
+              <source media="(max-width:499px)" srcset="{{ image.cropZoom(point5,point5h).url }} 1x, {{ image.cropZoom(point5 * 2,point5h * 2).url }} 2x">
+                <img class="media" style="width:inherit;" title="{{ page.header.title }}" alt="{{ page.header.alt }}" src="{{ image.cropZoom(point6,point6h).url }}" />
+              </picture>
+            {% else %}
+              <img src="{{ image.cropZoom(point7,point7h).url }}" alt="{{ person.name }}" title="{{ person.name }}" />
+            {% endif %}
+
+          </div>
+          <div class="person-detail">
+          {% if page.header.textpos == 1 %}
+            <span class="person-position mtop">{{ person.position }}</span>
+            <h4 class="person-name">{{ person.name }}</h4>
+          {% else %}
+            <h4 class="person-name">{{ person.name }}</h4>
+            <span class="person-position">{{ person.position }}</span>
+          {% endif %}
+
+            {% if page.header.contactbutton == 0 %}
+            <span class="person-email">
+              <a href="mailto:{{ person.email|safe_email }}">
+                {{ person.email }}
+              </a>
+            </span>
+            {% endif %}
+            <span class="person-text">{{ person.text | markdown }}</span>
+            {% if page.header.contactbutton == 1 %}
+              <span class="person-email">
+                <a class="teamemail" href="mailto:{{ person.email|safe_email }}">
+                  {{ page.header.contacttext }}
+                </a>
+              </span>
+          {% endif %}
+          </div>
+        </article>
+
+      {% endfor %}
+    </div>
+  </div>
+
+</section>

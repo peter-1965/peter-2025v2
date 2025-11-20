@@ -1,0 +1,64 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+.image-button {
+            width: 200px;
+            height: 100px;
+       /*     background-image: url('/planung/magnete/20250607_125545.webp');  */
+            background-size: cover;
+            border: none;
+            cursor: pointer;
+            font-size: 35px;
+           padding: 1px 1px;
+          /* border-right:1px solid #bbb; */
+          box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+}
+
+
+
+
+    
+</style>
+    
+</head>
+
+<body>
+{% set page_route = page.header.imagefolder|default() %}
+{% set imagefolder = page.find(page_route) %} 
+{% if page_route == "" %}
+    Pfad zu den Bildern nicht angegeben im Header (imagefolder: /bilder/....)
+    {% else %}
+    {% set imagefolder = page.header.imagefolder|default()   %}
+    {% endif %}   
+    
+
+    
+<br>   
+Bitte nachstehende Buttons auswählen
+<br>
+<br>
+    
+<div>
+{% for post in page.children.published.order('folder', 'asc').slice(0, 20) %}
+<button> <a href="{{ post.url }}" class="image-button" >{{ post.title }}</a></button>        
+ {% endfor %}    
+</div>
+    
+<div>    
+ {% for post in page.find(imagefolder).children.order('date', 'desc').slice(0, 20) %}
+    {% for image in post.media.images %} 
+        {{ image.height(200).html() | raw }}
+    {% endfor %} 
+{% endfor %}
+</div>
+    
+
+
+
+    
+
+    
+</body>
+</html>

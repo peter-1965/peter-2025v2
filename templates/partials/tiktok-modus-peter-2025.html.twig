@@ -1,0 +1,948 @@
+{# --- Alle Videos nach Ordner sammeln, mobile Videos filtern --- #}
+{% set all_videos_by_folder = [] %}
+
+{% if page.header.videofolder is defined and page.header.videofolder is iterable %}
+  {% for item in page.header.videofolder %}
+    {% if item.route is defined %}
+      {% set media_page = page.find(item.route) %}
+    {% else %}
+      {% set media_page = page.find(item) %}
+    {% endif %}
+
+    {% if media_page %}
+      {# Nur normale Videos, keine mobilen Versionen #}
+      {% set filtered_videos = [] %}
+      {% for v in media_page.media.videos %}
+        {% set clean_filename = v.filename|split('?')[0] %}
+        {% if '_mobile' not in clean_filename %}
+          {% set filtered_videos = filtered_videos|merge([v]) %}
+        {% endif %}
+      {% endfor %}
+
+      {% set all_videos_by_folder = all_videos_by_folder|merge([{
+        'title': item.title is defined ? item.title : media_page.title,
+        'videos': filtered_videos
+      }]) %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ page.title|e }}</title>
+
+<style>
+/* =========================================================
+   🔷 GRUNDLAYOUT & BASISSTILE
+   ========================================================= */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  background: #fff;
+  color: #000;
+}
+body.dark {
+  background: #000;
+  color: #e0e0e0;
+}
+
+/* Header & Standard-Grafiken ausblenden */
+header, .site-header, header.site-header.fixed, .screen-image.screen-top {
+  display: none !important;
+}
+
+/* =========================================================
+   🔷 VIDEO-GRID & ANSICHT
+   ========================================================= */
+#overview {
+  padding: 1rem;
+  box-sizing: border-box;
+}
+#overview h2 {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.video-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  transition: all 0.4s ease;
+}
+
+/* Zoomed-Out Ansicht (kleiner & dichter) */
+.video-grid.zoomed-out {
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+}
+.video-grid.zoomed-out .video-thumb video {
+  height: 160px;
+  transition: height 0.3s ease;
+}
+
+/* =========================================================
+   🔷 VIDEO-OVERLAY (Vollbild)
+   ========================================================= */
+#videoOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  justify-content: center;
+  align-items: center;
+  flex-direction: row;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+    
+/* 🔹 Video Overlay: Dynamische Höhe je nach Bildschirmgröße */
+#videoOverlay video {
+  max-width:100%;
+  max-height:100%;
+  transition:transform 0.3s ease, opacity 0.6s ease;
+  opacity: 0;
+}
+
+
+    
+    
+#videoOverlay video.visible {
+  opacity: 1;
+}
+
+/* =========================================================
+   🔷 OVERLAY STEUERUNG (Buttons, Info, Pfeile)
+   ========================================================= */
+#overlayControls {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 14px;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 10px 18px;
+  border-radius: 12px;
+}
+#overlayControls button {
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  cursor: pointer;
+  transition: transform 0.2s, color 0.2s;
+}
+#overlayControls button:hover {
+  transform: scale(1.2);
+  color: #00aaff;
+}
+
+/* Pfeilnavigation */
+.nav-arrow {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.4);
+  border: none;
+  color: #fff;
+  font-size: 36px;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 1;
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+/* Infobar unten */
+#videoInfoBar {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 20px;
+  color: #fff;
+  font-family: monospace;
+  font-size: 14px;
+  opacity: 0.85;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 6px 12px;
+  border-radius: 10px;
+  z-index: 10;
+}
+
+/* =========================================================
+   🔷 ZOOM-BUTTON FÜR GALLERY (oben rechts)
+   ========================================================= */
+#zoomGalleryBtn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 20px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  z-index: 50;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  transition: background 0.3s ease;
+}
+#zoomGalleryBtn:hover {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+/* Aktive Thumbnail-Markierung */
+.video-thumb.active-thumb {
+  outline: 3px solid #00aaff;
+  box-shadow: 0 0 15px rgba(0, 170, 255, 0.7);
+  border-radius: 8px;
+}
+
+/* =========================================================
+   🔷 VIDEO-THUMBNAILS (Vorschau)
+   ========================================================= */
+.video-thumb {
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.video-thumb:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 170, 255, 0.4);
+}
+.video-thumb video {
+  display: block;
+  width: 100%;
+  height: 250px;
+  aspect-ratio: 9/16;
+  object-fit: cover;
+  border-radius: 6px;
+  background-color: #000; /* verhindert weißen Streifen */
+  transition: all 0.3s ease;
+}
+.video-thumb .video-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.5rem;
+  color: rgba(255, 255, 255, 0.8);
+  background: rgba(0, 0, 0, 0.4);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0.9;
+  pointer-events: none;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+.video-thumb:hover .video-overlay {
+  transform: translate(-50%, -50%) scale(1.2);
+  opacity: 1;
+}
+
+/* =========================================================
+   🔷 RESPONSIVE ANPASSUNGEN
+   ========================================================= */
+
+/* Desktop: Pfeile horizontal */
+@media (min-width: 769px) {
+  #prevBtn { left: 30px; top: 50%; transform: translateY(-50%); }
+  #nextBtn { right: 30px; top: 50%; transform: translateY(-50%); }
+  
+  
+  
+}
+
+/* Mobile: vertikales Scroll-Layout (TikTok-Stil) */
+@media (max-width: 768px) {
+  .video-grid {
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  }
+  .video-grid.zoomed-out {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  }
+
+  .video-thumb video {
+    height: 200px;
+  }
+
+  #videoOverlay {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    overflow-y: scroll;
+    scroll-snap-type: y mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 2rem;
+    height: 100vh;
+  }
+
+  /* 🎬 Querformat-Videos wie Hochformat anzeigen */
+  #videoOverlay video {
+    width: 100%;
+    height: calc(65vh);
+    max-height: 70vh;
+    
+    max-width: 100%;
+    
+    object-fit: cover;
+    object-position: center center;
+    background-color: #000;
+    
+    scroll-snap-align: start;  /* scroll-snap für einzelne Videos */
+    border-radius: 6px;        /* optional: leicht abgerundet */
+    
+    
+  }
+
+  /* Mobile Pfeile */
+  .nav-arrow {
+    left: 10%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 40px;
+    font-size: 30px;
+  }
+  #prevBtn { top: 20%; left: 15%;  background: linear-gradient(135deg, #ff6ec4, #7873f5); }
+  #nextBtn { bottom: 25%;left: 15%; background: linear-gradient(135deg, #ff6ec4, #7873f5);}
+
+  
+  
+  
+  #overlayControls {
+    top: 10%;
+    bottom: auto;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+  }
+
+  #videoInfoBar {
+    bottom: auto;
+    top: 0%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+  }
+  
+  #overlayThumbs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start; /* wichtig! */
+    gap: 6px;
+    padding: 0 6px; /* links und rechts minimal */
+    overflow-x: auto;
+    background: rgba(0,0,0,0.6);
+    z-index: 2220;
+    box-sizing: border-box;
+  }
+
+ 
+  .overlay-thumb {
+    flex: 0 0 auto;  /* verhindert, dass es schrumpft */
+    width: 60px;
+    height: 60px;
+    margin: 0;       /* keine extra Verschiebung */
+  }
+  
+  .overlay-thumb:first-child {
+    margin-left: 0; /* falls zuvor margin oder gap die erste position verschiebt */
+  }
+
+  
+  #overlayThumbs::-webkit-scrollbar {
+    height: 6px;
+  }
+  #overlayThumbs::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+  }
+
+  /* Thumbnail Bilder kleiner für Mobile */
+  .overlay-thumb img {
+    height: 60px;
+    border-radius: 4px;
+  }
+  
+    
+  
+  
+  
+  
+  
+}
+
+
+/* =========================================================
+   🔷 THUMBS
+   ========================================================= */
+
+#overlayThumbs {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(0,0,0,0.6);
+  z-index: 2220;
+  box-sizing: border-box;
+  scroll-behavior: smooth; /* sanftes Scrollen */
+}
+
+
+
+
+
+.overlay-thumb {
+  flex: 0 0 auto;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+
+.overlay-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.overlay-thumb:hover {
+    transform: scale(1.1);
+    border-color: #00aaff;
+}
+
+.overlay-thumb.active-thumb {
+  border: 2px solid #00aaff;
+  box-shadow: 0 0 10px rgba(0, 170, 255, 0.6);
+  transform: scale(1.15);
+  border-radius: 6px;
+}
+
+
+/* =========================================================
+   🔷 KORREKTUR: Desktop größere Thumbnails
+   ========================================================= */
+@media (min-width: 769px) {
+ 
+   .overlay-thumb {
+    flex: 0 0 auto;  /* verhindert, dass es schrumpft */
+    width: 120px;
+    height: 120px;
+    margin: 0;       /* keine extra Verschiebung */
+  }
+  
+  .overlay-thumb:first-child {
+    margin-left: 0; /* falls zuvor margin oder gap die erste position verschiebt */
+  }
+
+  
+  #overlayThumbs::-webkit-scrollbar {
+    height: 6px;
+  }
+  #overlayThumbs::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+  }
+
+  
+
+}
+
+/* =========================================================
+   🔷 Mobile Pfeile in die Navigationsleiste
+   ========================================================= */
+
+
+/* 🔹 Standardmäßig: mobile-inline Pfeile ausblenden (Desktop) */
+#overlayControls .mobile-inline {
+  display: none;
+}
+
+
+/* =========================================================
+   🔹 Videodauer auf Thumbnails
+   ========================================================= */
+.video-thumb .video-duration {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: monospace;
+  opacity: 0.9;
+  pointer-events: none;
+}
+   
+   
+   
+    
+</style>
+</head>
+<body>
+
+{% if all_videos_by_folder|length %}
+
+<button id="zoomGalleryBtn" title="Zoom Ansicht umschalten">🔍</button>
+
+<div id="overview">
+  {% for folder in all_videos_by_folder %}
+    <h2>{{ folder.title }} ({{ folder.videos|length }} Videos)</h2>
+    <div class="video-grid">
+      {% for video in folder.videos %}
+        {% set jpg_filename = video.filename|replace({'.mp4':'.jpg', '.MP4':'.jpg'}) %}
+        {% set jpg_path = video.path ~ '/' ~ jpg_filename %}
+        {% set jpg_url  = video.url|replace({'.mp4':'.jpg', '.MP4':'.jpg'}) %}
+        {% set jpg_exists = jpg_path|file_exists %}
+        {% set poster_url = jpg_exists ? jpg_url : (video.url ~ '#t=0.1') %}
+
+        <div class="video-thumb" data-index="{{ loop.index0 }}">
+          <video class="lazy" muted preload="none" poster="{{ poster_url }}">
+            <source data-src="{{ video.url }}" type="video/mp4">
+          </video>
+          <div class="video-overlay">▶</div>
+          
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</div>
+
+<div id="videoOverlay">
+  <video id="overlayVideo" playsinline preload="metadata"></video>
+  
+  <button id="prevBtn" class="nav-arrow">◀</button>
+  <button id="nextBtn" class="nav-arrow">▶</button>
+
+  <div id="overlayControls">
+    <button id="playPauseBtn" title="Play / Pause">⏯</button>
+    <button id="soundBtn2" title="Ton ein/aus">🔇</button>
+    <button id="zoomBtn2" title="Zoom ein/aus">⤢</button>
+    <button id="toggleThumbsBtn" title="Thumbnails ein-/ausblenden">🖼️</button>
+    <button id="closeBtn" title="Schließen (ESC)">✖</button>
+  </div>
+
+
+  <div id="videoInfoBar">
+    <span id="videoTime">00:00 / 00:00</span>
+    <span id="videoCounter">(1 / 1)</span>
+    
+  </div>
+  <!-- THUMBNAILS UNTER DEM VIDEO -->
+  <div id="overlayThumbs"></div>
+
+
+</div>
+
+<script>
+// -------------------- Variablen --------------------
+const thumbs = document.querySelectorAll('.video-thumb');
+const overlay = document.getElementById('videoOverlay');
+const overlayVideo = document.getElementById('overlayVideo');
+const playPauseBtn = document.getElementById('playPauseBtn');
+const soundBtn2 = document.getElementById('soundBtn2');
+const zoomBtn2 = document.getElementById('zoomBtn2');
+const closeBtn = document.getElementById('closeBtn');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+const videoTime = document.getElementById('videoTime');
+const videoCounter = document.getElementById('videoCounter');
+const videoFilename = document.getElementById('videoFilename');
+const toggleThumbsBtn = document.getElementById('toggleThumbsBtn');
+const overlayThumbs = document.getElementById('overlayThumbs');
+let thumbsVisible = true;
+
+toggleThumbsBtn.addEventListener('click', () => {
+  thumbsVisible = !thumbsVisible;
+  overlayThumbs.style.display = thumbsVisible ? 'flex' : 'none';
+  toggleThumbsBtn.textContent = thumbsVisible ? '🖼️' : '🚫';
+});
+
+
+let currentIndex = 0;
+let soundOn = false;
+let zoomed = false;
+
+// -------------------- Hilfsfunktionen --------------------
+function formatTime(sec){ 
+    if(isNaN(sec)) return "00:00"; 
+    const m = Math.floor(sec/60); 
+    const s = Math.floor(sec%60); 
+    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; 
+}
+
+function preloadVideo(url){
+    if (videoCache[url]) return; // Schon geladen
+    const vid = document.createElement('video');
+    vid.src = url;
+    vid.preload = 'auto';
+    vid.muted = true;
+    vid.load();
+    videoCache[url] = vid;
+}
+
+// Preload 2 Videos vorher/nachher
+function preloadAdjacentVideos(){
+    const preloadRange = 2; // 2 davor / 2 danach
+    for(let i = 1; i <= preloadRange; i++){
+        const prevIndex = currentIndex - i;
+        const nextIndex = currentIndex + i;
+
+        if(prevIndex >= 0){
+            const prevUrl = thumbs[prevIndex].querySelector('source').dataset.src;
+            preloadVideo(prevUrl);
+        }
+        if(nextIndex < thumbs.length){
+            const nextUrl = thumbs[nextIndex].querySelector('source').dataset.src;
+            preloadVideo(nextUrl);
+        }
+    }
+}
+
+// -------------------- Overlay öffnen --------------------
+thumbs.forEach((thumb,index)=>{
+    const src = thumb.querySelector('source')?.dataset.src;
+    if(!src) return;
+    thumb.addEventListener('click',()=> openOverlay(src,index));
+});
+
+function openOverlay(src,index){
+    currentIndex = index;
+    document.body.style.overflow = 'hidden';
+    overlay.style.display = 'flex';
+    overlayVideo.style.opacity = 0;
+
+    // Mobile prüfen
+    let mobileSrc = src.replace(/\.mp4$/, '_mobile.mp4');
+
+    // Bildschirm klein oder Netzwerk langsam -> mobile verwenden
+    let useMobile = false;
+    if(window.innerWidth <= 768){ 
+        useMobile = true; 
+    } else if(navigator.connection){
+        const type = navigator.connection.effectiveType || '';
+        if(['2g','3g','slow-2g'].includes(type.toLowerCase())) useMobile = true;
+    }
+
+    if(useMobile){
+        // Prüfen, ob Datei existiert (Thumbnail Pfad ableiten)
+        // Da JS keinen direkten FileCheck kann, versuchen laden -> fallback auf Full-HD
+        fetch(mobileSrc, {method:'HEAD'}).then(res=>{
+            overlayVideo.src = res.ok ? mobileSrc : src;
+            overlayVideo.load();
+        }).catch(()=>{ overlayVideo.src = src; overlayVideo.load(); });
+    } else {
+        overlayVideo.src = src;
+        overlayVideo.load();
+    }
+
+   
+
+    overlayVideo.addEventListener('canplay', ()=>{
+        overlayVideo.play().catch(()=>{});
+        overlayVideo.style.transition = 'opacity 0.5s ease';
+        overlayVideo.style.opacity = 1;
+    }, {once:true});
+
+    updateCounter();
+    highlightThumb();
+    preloadAdjacentVideos();
+    updateArrowVisibility();
+}
+
+
+// -------------------- Play/Pause --------------------
+function toggleVideoPlayback(){
+    if(overlayVideo.ended){ overlayVideo.currentTime=0; overlayVideo.play(); }
+    else if(overlayVideo.paused){ overlayVideo.play(); }
+    else{ overlayVideo.pause(); }
+}
+overlayVideo.addEventListener('click', toggleVideoPlayback);
+overlayVideo.addEventListener('touchend', (e)=>{ e.preventDefault(); toggleVideoPlayback(); });
+playPauseBtn.onclick = toggleVideoPlayback;
+
+// -------------------- Sound Button --------------------
+soundBtn2.onclick = ()=>{
+    soundOn = !soundOn;
+    overlayVideo.muted = !soundOn;
+    soundBtn2.textContent = soundOn ? '🔊' : '🔇';
+};
+
+// -------------------- Zoom Button --------------------
+zoomBtn2.onclick = ()=>{
+    zoomed = !zoomed;
+    if(zoomed){
+    overlayVideo.style.transform = 'scale(1.25)'; // vergrößern
+    overlayVideo.style.objectFit = 'cover';       // Beschnitt sichtbar
+    zoomBtn2.textContent = '⤡';
+  } else {
+    overlayVideo.style.transform = 'scale(1)';    // zurück
+    overlayVideo.style.objectFit = 'cover';     // Beschnitt sichtbar
+    zoomBtn2.textContent = '⤢';
+  }
+    
+    
+    
+    
+    
+    
+    
+};
+
+// -------------------- Overlay schließen --------------------
+closeBtn.onclick = closeOverlay;
+overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeOverlay(); });
+function closeOverlay(){
+    overlayVideo.pause();
+    overlayVideo.src = '';
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    highlightThumb();
+     overlayVideo.muted = true;
+    soundOn = false;
+    soundBtn2.textContent = '🔇';
+}
+
+// -------------------- Pfeile --------------------
+function showNextVideo(){ 
+    if(currentIndex < thumbs.length - 1){
+        openOverlay(thumbs[currentIndex+1].querySelector('source').dataset.src, currentIndex+1);
+    }
+}
+function showPrevVideo(){ 
+    if(currentIndex > 0){
+        openOverlay(thumbs[currentIndex-1].querySelector('source').dataset.src, currentIndex-1);
+    }
+}
+prevBtn.onclick = showPrevVideo;
+nextBtn.onclick = showNextVideo;
+
+// -------------------- Tastatursteuerung --------------------
+document.addEventListener('keydown', (e)=>{
+    if(overlay.style.display !== 'flex') return;
+    if(e.key === 'Escape') closeOverlay();
+    if(e.key === ' ') { e.preventDefault(); toggleVideoPlayback(); }
+    if(e.key === 'ArrowRight') showNextVideo();
+    if(e.key === 'ArrowLeft') showPrevVideo();
+});
+
+// -------------------- Video-Zeit & Counter --------------------
+overlayVideo.addEventListener('timeupdate', ()=>{
+    videoTime.textContent = `${formatTime(overlayVideo.currentTime)} / ${formatTime(overlayVideo.duration)}`;
+});
+function updateCounter(){ videoCounter.textContent = `(${currentIndex+1} / ${thumbs.length})`; }
+
+// -------------------- Aktives Thumbnail --------------------
+function highlightThumb(){
+  // Grid-Thumbnails (dein vorhandenes Verhalten)
+  thumbs.forEach(t => t.classList.remove('active-thumb'));
+  thumbs[currentIndex]?.classList.add('active-thumb');
+
+  // Overlay-Thumbnails synchronisieren
+  const overlayThumbs = Array.from(document.querySelectorAll('#overlayThumbs .overlay-thumb'));
+  overlayThumbs.forEach(t => t.classList.remove('active-thumb'));
+  if (overlayThumbs[currentIndex]) overlayThumbs[currentIndex].classList.add('active-thumb');
+
+  // Scroll Overlay-Leiste so, dass das aktuelle Thumb (wenn vorhanden) zentriert wird
+  const container = document.getElementById('overlayThumbs');
+  const activeOverlayThumb = overlayThumbs[currentIndex];
+  if (container && activeOverlayThumb) {
+    // Berechne Offset sodass das aktive Thumb in der Mitte des Containers landet
+    const containerRect = container.getBoundingClientRect();
+    const thumbRect = activeOverlayThumb.getBoundingClientRect();
+    const currentScroll = container.scrollLeft;
+    const thumbCenter = thumbRect.left + thumbRect.width / 2;
+    const containerCenter = containerRect.left + containerRect.width / 2;
+    const delta = thumbCenter - containerCenter;
+    // scrollBy: negatives delta -> nach links, positives -> nach rechts
+    container.scrollTo({ left: Math.max(0, currentScroll + delta), behavior: 'smooth' });
+  }
+
+  // (Optional) Grid-Thumbnails ebenfalls ins sichtfeld bringen
+  if(window.innerWidth <= 768){
+    thumbs[currentIndex]?.scrollIntoView({behavior:'smooth', block:'center'});
+  } else {
+    thumbs[currentIndex]?.scrollIntoView({behavior:'smooth', inline:'center'});
+  }
+   updateArrowVisibility();
+}
+
+// -------------------- Pfeile ein-/ausblenden --------------------
+function updateArrowVisibility() {
+  // Wenn nur 1 Video vorhanden ist, beide ausblenden
+  if (thumbs.length <= 1) {
+    prevBtn.style.display = 'none';
+    nextBtn.style.display = 'none';
+    return;
+  }
+
+  // Beim ersten Video: prev ausblenden
+  prevBtn.style.display = currentIndex === 0 ? 'none' : 'flex';
+  // Beim letzten Video: next ausblenden
+  nextBtn.style.display = currentIndex === thumbs.length - 1 ? 'none' : 'flex';
+}
+
+
+// -------------------- Mobile Pfeile & Autohide --------------------
+let autoHideTimeout;
+function showNavArrows(){
+    prevBtn.style.opacity = 1;
+    nextBtn.style.opacity = 1;
+    clearTimeout(autoHideTimeout);
+    autoHideTimeout = setTimeout(()=>{
+        prevBtn.style.opacity = 0.2;
+        nextBtn.style.opacity = 0.2;
+    }, 2000);
+}
+overlay.addEventListener('mousemove', showNavArrows);
+overlay.addEventListener('touchstart', showNavArrows);
+
+// -------------------- Mobile Swipe vertikal --------------------
+let touchStartY = 0; let touchEndY = 0; 
+const swipeThreshold = 50;
+overlay.addEventListener('touchstart', (e)=>{ touchStartY = e.changedTouches[0].screenY; });
+overlay.addEventListener('touchend', (e)=>{ 
+    touchEndY = e.changedTouches[0].screenY; 
+    handleVerticalSwipe(); 
+});
+function handleVerticalSwipe(){
+    const deltaY = touchEndY - touchStartY;
+    if(Math.abs(deltaY) > swipeThreshold){
+        if(deltaY > 0) showPrevVideo();
+        else showNextVideo();
+        highlightThumb();
+    }
+}
+
+// -------------------- Gallery Zoom Button (Grid-Ansicht) --------------------
+const zoomGalleryBtn = document.getElementById('zoomGalleryBtn');
+let zoomGallery = false;
+
+if (zoomGalleryBtn) {
+  zoomGalleryBtn.addEventListener('click', () => {
+    zoomGallery = !zoomGallery;
+    document.querySelectorAll('.video-grid')
+      .forEach(grid => grid.classList.toggle('zoomed-out', zoomGallery));
+  });
+}
+    
+    
+    
+// -------------------- Responsive Pfeil-Symbole --------------------
+function updateArrowSymbols(){
+    if(window.innerWidth <= 768){ prevBtn.textContent="▲"; nextBtn.textContent="▼"; }
+    else{ prevBtn.textContent="◀"; nextBtn.textContent="▶"; }
+}
+window.addEventListener('resize', updateArrowSymbols);
+updateArrowSymbols();
+
+
+
+// -------------------- Overlay-Thumbnails unter dem Video --------------------
+// -------------------- Overlay-Thumbnails unter dem Video (mobil & desktop) --------------------
+let isThumbScrolling = false; // erkennt, ob gerade gescrollt wird
+
+function buildOverlayThumbs() {
+  const overlayThumbsContainer = document.getElementById('overlayThumbs');
+  if (!overlayThumbsContainer) return;
+
+  overlayThumbsContainer.innerHTML = ''; // vorher leeren
+
+  // Touch-Scroll erkennen
+  overlayThumbsContainer.addEventListener('touchstart', () => { isThumbScrolling = false; });
+  overlayThumbsContainer.addEventListener('touchmove', () => { isThumbScrolling = true; });
+  overlayThumbsContainer.addEventListener('touchend', () => { 
+    setTimeout(() => { isThumbScrolling = false; }, 200); 
+  });
+
+  thumbs.forEach((thumb, index) => {
+    const thumbDiv = document.createElement('div');
+    thumbDiv.classList.add('overlay-thumb');
+    thumbDiv.dataset.index = index;
+
+    const img = document.createElement('img');
+    img.src = thumb.querySelector('video').poster;
+    img.alt = 'Thumbnail';
+
+    thumbDiv.appendChild(img);
+    overlayThumbsContainer.appendChild(thumbDiv);
+
+    // Klick auf Thumbnail: Video wechseln, nur wenn NICHT gescrollt wird
+    thumbDiv.addEventListener('click', (e) => {
+      if (isThumbScrolling) return;
+      e.preventDefault();
+      e.stopPropagation();
+
+      openOverlay(thumb.querySelector('source').dataset.src, index);
+      highlightThumb();
+      scrollThumbIntoView(index);
+    });
+  });
+}
+
+// Aktives Thumbnail ins Sichtfeld zentrieren
+function scrollThumbIntoView(index) {
+  const container = document.getElementById('overlayThumbs');
+  const thumbs = container?.querySelectorAll('.overlay-thumb');
+  if (!container || !thumbs || !thumbs[index]) return;
+
+  const active = thumbs[index];
+  
+  // Firefox workaround: temporär scroll-behavior deaktivieren
+  const originalBehavior = container.style.scrollBehavior;
+  container.style.scrollBehavior = 'auto';
+
+  const offsetLeft = active.offsetLeft;
+  const thumbWidth = active.offsetWidth;
+  const containerWidth = container.clientWidth;
+
+  // Ziel-Scroll: aktives Thumb in der Mitte
+  const targetScroll = offsetLeft - containerWidth / 2 + thumbWidth / 2;
+  container.scrollTo({ left: targetScroll, behavior: 'smooth' });
+
+  // Scroll-behavior wieder zurücksetzen
+  container.style.scrollBehavior = originalBehavior;
+}
+
+// Overlay-Thumbnails einmal beim Laden bauen
+buildOverlayThumbs();
+
+
+
+
+
+
+</script>
+
+{% else %}
+<p style="color:black;text-align:center;padding:2rem;">
+Keine Videos gefunden. Bitte <b>videofolder</b> im Seiten-Header prüfen.
+</p>
+{% endif %}
+</body>
+</html>

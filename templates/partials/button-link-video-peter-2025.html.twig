@@ -1,0 +1,26 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+<style>
+
+</style>
+</head>
+
+<body>
+{% set page_route2 = page.header.videofolder|default() %}
+{% set media_page2 = page.find(page_route2) %}
+
+<br>
+{% if page_route2 == "" %}
+   
+    <p style="font-size:16px">Keine Reisevideos &#128530;</p>
+    
+{% else %}
+    <a href= "{{page_route2}}"><button class="btn btn-success" style="font-size:18px;background-color:#486144">Videos</button></a> 
+    <br>
+{% endif %}     
+    
+
+    
+</body>
+</html>

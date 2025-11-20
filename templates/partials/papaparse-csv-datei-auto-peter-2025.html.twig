@@ -1,0 +1,268 @@
+
+{% if csv == "" %}
+Kein Datendatei mit "data.csv" angegeben. Daten der Marker können nicht gelesen werden. 
+    <br>
+Folgendes Ergänzen, als Beispiel:  set csv = "/tecartmedia/deutschland/jahr-2025/data.csv"  
+
+{% else %}
+
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orte auf einer Karte anzeigen:</title>
+
+     <!-- Leaflet CSS (lokal) -->
+    <link rel="stylesheet" href="/tecartmedia/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="/tecartmedia/leaflet/leaflet.fullscreen.css" />
+   
+    <link rel="stylesheet" href="/tecartmedia/leaflet-markercluster/MarkerCluster.Default.css" />
+  
+   
+
+  
+    
+
+
+
+<style>
+        #map {
+            height: 400px;
+            width: 100%;
+            z-index:998;
+        }
+        .leaflet-control-home {
+            background-color: white;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            z-index:999;
+        }
+        .my-popup-text {
+            font-size: 16px;
+            color: blue;
+        }
+
+/* ✅ Fix: Cluster-Ziffern und Marker-Z-Index korrigieren */
+        .leaflet-marker-icon,
+        .leaflet-marker-shadow {
+            z-index: 100 !important;
+        }
+
+        .marker-cluster {
+            z-index: 2000 !important;
+        }
+
+        .marker-cluster div {
+            z-index: 2001 !important;
+        } 
+.marker-cluster {
+  z-index: 999 !important;
+  
+}
+.marker-cluster div {
+  z-index: 1000 !important;
+}
+
+.leaflet-control-search {
+    background-color: white;
+    padding: 4px;
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+}
+.leaflet-control-search input:focus {
+    border-color: #0078ff;
+}
+
+
+</style>
+</head>
+<body>
+
+   
+    <p>Orte auf einer Karte anzeigen:</p>
+    
+
+    <!-- Leaflet Karte -->
+    <div id="map"></div>
+
+    <!-- Leaflet JS (lokal) -->
+    <script src="/tecartmedia/leaflet/leaflet.js"></script>
+    <script src="/tecartmedia/leaflet-markercluster/leaflet.markercluster-src.js"></script>
+    <script src="/tecartmedia/leaflet/Leaflet.fullscreen.js"></script>
+  
+ 
+       
+ 
+  
+      
+      <!-- PapaParse JS für CSV-Verarbeitung -->
+    <script src="/tecartmedia/papaparse/papaparse.js"></script>
+ 
+ 
+ 
+ 
+ 
+   <script>
+    // Karte initialisieren
+    var map = L.map('map').setView([51.1657, 10.4515], 6);  // Deutschland
+
+    const HOME_COORDS = [51.1657, 10.4515];
+    const HOME_ZOOM = 5; 
+
+    // --- Kartenstile definieren ---
+    var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    });
+
+    var satelliteLayer = L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
+        subdomains: ['mt0','mt1','mt2','mt3'],
+        attribution: '&copy; Google'
+    });
+
+    // Standard-Kartenstil aktivieren
+    osmLayer.addTo(map);
+    var currentLayer = 'osm';
+
+    // CSV laden und Marker hinzufügen
+    var csvUrl = '{{ csv }}' + '?t=' + new Date().getTime();
+    var markers = L.markerClusterGroup();
+    var markerList = []; // Liste aller Marker für die Suche
+
+    Papa.parse(csvUrl, {
+        download: true,
+        header: true,
+        dynamicTyping: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+            console.log("CSV-Daten geladen:", results);
+            var bounds = L.latLngBounds();
+
+            results.data.forEach(function(row) {
+                var lat = parseFloat(row.latitude);
+                var lon = parseFloat(row.longitude);
+                var name = row.name || 'Unbenannt';
+                var link = row.link || 'Unbekannt';
+
+                if (!isNaN(lat) && !isNaN(lon)) {
+                    var marker = L.marker([lat, lon]).bindPopup(
+                        "<div><p class='my-popup-text'><b>" + name + "</b><br>" +
+                        "Link:<br><a href='{{ base_url_absolute }}/" + link + "' target='_blank'>" + name + "</a></p></div>"
+                    );
+                    markers.addLayer(marker);
+                    markerList.push({ name: name.toLowerCase(), marker: marker });
+                    bounds.extend([lat, lon]);
+                }
+            });
+
+            map.addLayer(markers);
+            map.fitBounds(markers.getBounds());
+
+            // Maßstab + Vollbild-Steuerung
+            L.control.scale().addTo(map);
+            L.control.fullscreen().addTo(map);
+
+            // 🏠 Home-Button
+            const HomeControl = L.Control.extend({
+                options: { position: 'topleft' },
+                onAdd: () => {
+                    const container = L.DomUtil.create('div', 'leaflet-control-home');
+                    container.innerHTML = '🏠';
+                    container.title = 'Zur Startansicht zurückkehren';
+                    container.onclick = () => map.fitBounds(markers.getBounds());
+                    L.DomEvent.disableClickPropagation(container);
+                    return container;
+                }
+            });
+            map.addControl(new HomeControl());
+
+            // 🗺️ Kartenstil-Umschalter
+            const MapSwitchControl = L.Control.extend({
+                options: { position: 'topleft' },
+                onAdd: function () {
+                    const container = L.DomUtil.create('div', 'leaflet-control-home');
+                    container.innerHTML = '🗺️';
+                    container.title = 'Kartenstil wechseln (OSM / Satellit)';
+                    container.onclick = function () {
+                        if (currentLayer === 'osm') {
+                            map.removeLayer(osmLayer);
+                            map.addLayer(satelliteLayer);
+                            currentLayer = 'satellite';
+                        } else {
+                            map.removeLayer(satelliteLayer);
+                            map.addLayer(osmLayer);
+                            currentLayer = 'osm';
+                        }
+                    };
+                    L.DomEvent.disableClickPropagation(container);
+                    return container;
+                }
+            });
+            map.addControl(new MapSwitchControl());
+
+            // 🔍 Suchfeld
+            const SearchControl = L.Control.extend({
+                options: { position: 'topright' },
+                onAdd: function () {
+                    const container = L.DomUtil.create('div', 'leaflet-control-search');
+                    const input = L.DomUtil.create('input', '', container);
+                    input.type = 'text';
+                    input.placeholder = 'Ort suchen...';
+                    input.style.width = '140px';
+                    input.style.height = '28px';
+                    input.style.padding = '4px';
+                    input.style.border = '1px solid #ccc';
+                    input.style.borderRadius = '6px';
+                    input.style.outline = 'none';
+                    input.style.fontSize = '14px';
+                    input.title = 'Suche nach Name (aus CSV)';
+
+                    input.addEventListener('keyup', function (e) {
+                        if (e.key === 'Enter') {
+                            const query = input.value.trim().toLowerCase();
+                            if (query === '') return;
+
+                          const result = markerList.find(m => m.name.includes(query));
+                            if (result) {
+                                map.setView(result.marker.getLatLng(), 10);
+                                result.marker.openPopup();
+                            } else {
+                                alert('Kein Treffer für: ' + query);
+                            }
+                        }
+                    });
+
+                    L.DomEvent.disableClickPropagation(container);
+                    return container;
+                }
+            });
+            map.addControl(new SearchControl());
+        },
+        error: function(error) {
+            console.error("Fehler beim Laden der CSV-Datei:", error.message);
+        }
+    });
+
+    // Optional: Zoomänderung loggen
+    map.on('zoomend', function() {
+        console.log("Aktuelle Zoomstufe:", map.getZoom());
+    });
+</script>
+
+
+    
+  
+    
+{% endif %}    
+    
+</body>
+</html>
+ 
