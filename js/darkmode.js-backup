@@ -1,0 +1,20 @@
+document.addEventListener('DOMContentLoaded', () => {
+  const toggle = document.getElementById('dark-mode-toggle');
+  const saved = localStorage.getItem('theme');
+
+  // Falls User schon Dark Mode hatte → wiederherstellen
+  if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.body.classList.add('dark-mode');
+  }
+
+  toggle.addEventListener('click', () => {
+    if (document.body.classList.contains('dark-mode')) {
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    }
+  });
+});
+

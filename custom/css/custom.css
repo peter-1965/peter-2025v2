@@ -1,0 +1,90 @@
+
+
+#breadcrumbs {
+    height: 2rem;
+    line-height: 2rem;
+    padding-inline-start: 2rem;
+    background-color: #eee;
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.35);
+	overflow: hidden;
+	/*border-radius: 5px; */
+
+}
+#breadcrumbs i {
+    display: inline-block;
+    width: 2px;
+    text-align: center;
+    background-color: #eee;
+}
+
+/* Hintergrundfarbe von Photoswipe ändern*/
+.pswp__bg {
+  background: black; /* Example: set a custom background color */
+}
+
+
+:root html, :root body {
+  font-size: 16px;
+
+}
+
+main.site-content {
+  background-color: yellow;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin-bottom: 1rem;
+  font-size: 20px;
+  font-weight: 900;
+  padding: 0;
+  line-height: 80%;
+}
+
+
+
+header.site-header div.header-inner nav.header-nav.mobile ul li img {
+  position: absolute;
+  right: -30px;
+  top: 40%;
+  transform: translateY(-50%);
+  height: 25px;
+
+}
+
+header.site-header div.header-inner nav.header-nav.mobile {
+  margin-top: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  display: none;
+  background-color: lightgrey;
+  width: 100%;
+  height: calc(100vh - 60px);
+  position: absolute;
+  top: 0;
+  overflow-y: scroll;
+  align-items: center;
+  justify-content: center;
+
+}
+
+
+
+header.site-header div.header-inner nav.header-nav.desktop ul li a {
+  line-height: 50px;
+  padding: 0 10px;
+  display: block;
+  text-decoration: none;
+  font-size: 14px;
+  box-shadow: yes;
+
+}
+
+
+
+header.site-header div.header-inner nav.header-nav.mobile ul li a {
+  color: #486144;
+  font-size: 18px;
+  font-family: 'Cabin', serif;
+  text-decoration: none !important;
+
+}
